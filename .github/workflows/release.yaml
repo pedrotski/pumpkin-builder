@@ -1,0 +1,50 @@
+name: Weekly Release
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 0 * * 0'  # Run at midnight every Sunday
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Clone upstream
+      run: |
+        git clone https://github.com/Snowiiii/Pumpkin.git
+        cd Pumpkin
+        
+        # Install Rust
+        curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
+        source "$HOME/.cargo/env"
+        
+        # Build with optimizations
+        RUSTFLAGS="-C target-cpu=native" cargo build --release
+        
+    - name: Prepare Release
+      id: prep
+      run: |
+        cd Pumpkin
+        # Get version info
+        COMMIT_SHA=$(git rev-parse --short HEAD)
+        DATE=$(date +'%Y-%m-%d')
+        echo "release_name=Weekly Build ${DATE} (${COMMIT_SHA})" >> $GITHUB_OUTPUT
+        echo "tag_name=weekly-${DATE}" >> $GITHUB_OUTPUT
+        
+        # Create release notes
+        echo "Changes since last week:" > release_notes.md
+        git log --pretty=format:"- %s (%h)" -10 >> release_notes.md
+        
+        # Compress binary
+        tar -czf pumpkin-linux.tar.gz -C target/release pumpkin
+        
+    - name: Create Release
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        # Create the release
+        gh release create "${{ steps.prep.outputs.tag_name }}" \
+          --title "${{ steps.prep.outputs.release_name }}" \
+          --notes-file Pumpkin/release_notes.md \
+          --repo "${{ github.repository }}" \
+          Pumpkin/pumpkin-linux.tar.gz
