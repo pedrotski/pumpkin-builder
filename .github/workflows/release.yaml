@@ -3,7 +3,7 @@ name: Weekly Release
 on:
   workflow_dispatch:
   schedule:
-    - cron: '0 0 * * 0'  # Run at midnight every Sunday
+    - cron: '0 0 * * 0'
 
 jobs:
   build:
@@ -18,8 +18,13 @@ jobs:
         curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y
         source "$HOME/.cargo/env"
         
-        # Build with optimizations
-        RUSTFLAGS="-C target-cpu=native" cargo build --release
+        # Build with AMD optimizations
+        RUSTFLAGS="-C target-cpu=x86-64-v2" cargo build --release
+        # Alternative options:
+        # x86-64-v2: For newer AMD CPUs (Zen/Zen+/Zen 2/Zen 3)
+        # Or use "znver1" for Zen 1
+        # Or use "znver2" for Zen 2
+        # Or use "znver3" for Zen 3
         
     - name: Prepare Release
       id: prep
