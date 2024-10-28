@@ -40,7 +40,7 @@ jobs:
         
     - name: Create Release
       env:
-        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        GITHUB_TOKEN: ${{ secrets.RELEASE_TOKEN }}
       run: |
         # Create the release
         gh release create "${{ steps.prep.outputs.tag_name }}" \
